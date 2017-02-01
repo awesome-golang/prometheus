@@ -328,7 +328,7 @@ func populateLabels(lset model.LabelSet, cfg *config.ScrapeConfig) (res, orig mo
 	}
 
 	preRelabelLabels := lset.Clone()
-	lset = relabel.Process(lset, cfg.RelabelConfigs...)
+	lset = relabel.Process(lset.Clone(), cfg.RelabelConfigs...)
 
 	// Check if the target was dropped.
 	if lset == nil {
