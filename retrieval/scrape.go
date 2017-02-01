@@ -525,33 +525,22 @@ func (sl *scrapeLoop) append(b []byte, ts time.Time) (total, added int, err erro
 
 		mets := string(met)
 		ref, ok := sl.cache[mets]
-		if ok {
-			if err = app.Add(ref, t, v); err == nil {
-				added++
-				continue
-			} else if err != storage.ErrNotFound {
-				break
-			}
-			ok = false
-		}
 		if !ok {
 			var lset labels.Labels
 			p.Metric(&lset)
 
-			ref, err = app.SetSeries(lset)
+			ref, err = app.Add(lset, t, v)
 			// TODO(fabxc): also add a dropped-cache?
 			if err == errSeriesDropped {
 				continue
-			}
-			if err != nil {
+			} else if err != nil {
 				break
 			}
-			if err = app.Add(ref, t, v); err != nil {
-				break
-			}
-			added++
+			sl.cache[mets] = ref
+		} else if err = app.AddFast(ref, t, v); err != nil {
+			break
 		}
-		sl.cache[mets] = ref
+		added++
 	}
 	if err == nil {
 		err = p.Err()
